@@ -20,9 +20,30 @@ function outputTable(table)
   end
 end
 
+-- Is the string empty
+local function isempty(s)
+  return s == nil or s == ''
+end
+
 -- Get the arguments for the program
 function readProgramArguments()
   arguments = {"no_command", "no_arg1", "no_arg3"}
+  
+  arg1 = arg[1]
+  arg2 = arg[2]
+  arg3 = arg[3]
+  
+  if not isempty(arg1) then 
+    arguments[1] = arg1
+  end
+  
+  if not isempty(arg2) then 
+    arguments[2] = arg2
+  end
+  
+  if not isempty(arg3) then 
+    arguments[3] = arg3
+  end
 
   return arguments
 end
@@ -43,9 +64,9 @@ end
 
 -- Main
 local function main()
-
   arguments = readProgramArguments()
-
+  
+  argsCount = lengthOfTable(arguments)
+  
   outputTable(arguments)
-
 end main()
