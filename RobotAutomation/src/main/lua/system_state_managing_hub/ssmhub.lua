@@ -65,10 +65,11 @@ end
 
 -- Table -> String (regex '|', end-line '#')
 function deserialiseEntry(string)
-  foundSeperators = 0
-  entry = {}
+  local foundSeperators = 0
+  local entry = {}
   
   string:gsub(".", function(char)
+  
     if char == "#" then
       return entry
     elseif char == "|" then
@@ -100,7 +101,6 @@ function commandSystem()
   elseif arguments[3] == "no_arg" then
     print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
     return 2
-  
 end
 
 -- Database command
@@ -109,7 +109,7 @@ function commandDatabase()
   if arguments[2] == "no_arg1" then
     print("The 'database' command must have at least one argument: [generate, wipe, dump, delete, get <system_name>]", true)
     return 2
-
+    
   elseif arguments[2] == "generate" then
     local file = io.open(database, "w+")
     file:write("#ssmhub database")
@@ -124,48 +124,68 @@ function commandDatabase()
     print("= DUMP  END  =")
     return 1
 
+  -- 1+
   elseif arguments[2] == "get" then
+  
+    -- 2+
     if isEmpty(arguments[3]) then
       print("The 'database get' command must have a <name> parameter")
       return 0
+    -- 2-
+    
+    -- 3+
     else
       local file = io.open(database, "r")
+      
+      -- 4+
       for line in io.lines(file) do
         local state = ""
         local id = ""
         local dividersFound = 0
 
+        -- 5+
         line:gsub(".", function(c)
+        
+          -- 6+
           if c == "|" then
+          
+            -- 7+
             if dividersFound == 0 then
               state = state .. c
+            -- 7-
             end
+            -- 8+
             if dividersFound == 1 then
               id = id .. c
             end
+            -- 8-
             dividersFound = dividersFound + 1
+            
+          -- 6-
           end
           
-        -- End lambda
+        -- 5-
         end)
 
         io.close(file)
 
-        -- End "for line"
+        -- 4-
       end
 
-      -- End "elseif"
+      -- 3-
     end
     
+    -- 9+
     else 
       print("Illegal argument for command. Use 'help' for a list of commands and arguments.")
       return 0
+    -- 9-
     end
 
-    -- End "if"
+    -- 2-
   end
 
-  --End function
+  -- 1-
 end
 
 -- Help command
@@ -219,411 +239,15 @@ function main()
     commandCompleteCode = commandSystem()
 
   elseif commandArgument == "database" then
-    commandCompleteCode = commandDatabase()
+    commandCompleteCode = commandDatabaseStep()
 
   elseif commandArgument == "help" then
     commandCompleteCode = commandHelp()
 
   else
-    illegalCommand(commandName)
+    illegalCommand(commandArgument)
   end
 end main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
