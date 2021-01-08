@@ -98,9 +98,11 @@ function commandSystem()
   if arguments[2] == "no_arg1" then
     print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
     return 2
-  elseif arguments[3] == "no_arg" then
+  end
+  if arguments[3] == "no_arg" then
     print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
     return 2
+  end
 end
 
 -- Database command
@@ -144,20 +146,22 @@ function commandDatabase()
         local dividersFound = 0
 
         -- 5+
-        line:gsub(".", function(c)
+        line:gsub(".", function(char)
         
           -- 6+
-          if c == "|" then
+          if char == "|" then
           
             -- 7+
             if dividersFound == 0 then
-              state = state .. c
+              state = state .. char
             -- 7-
             end
+            
             -- 8+
             if dividersFound == 1 then
-              id = id .. c
+              id = id .. char
             end
+            
             -- 8-
             dividersFound = dividersFound + 1
             
@@ -184,9 +188,6 @@ function commandDatabase()
 
     -- 2-
   end
-
-  -- 1-
-end
 
 -- Help command
 function commandHelp()
@@ -239,7 +240,7 @@ function main()
     commandCompleteCode = commandSystem()
 
   elseif commandArgument == "database" then
-    commandCompleteCode = commandDatabaseStep()
+    commandCompleteCode = commandDatabase()
 
   elseif commandArgument == "help" then
     commandCompleteCode = commandHelp()
