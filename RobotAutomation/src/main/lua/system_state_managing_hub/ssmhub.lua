@@ -1,4 +1,3 @@
-
 -- Aesthetics
 moduleName = "Project Galactic System State Managing Hub"
 authorName = "GenElectrovise"
@@ -8,7 +7,7 @@ githubLink = "https://github.com/GenElectrovise/Project-Galactic"
 -- Functional
 doIntroText = true
 live = false
-database = "data/ssmhub.database"
+database = "ssmhub.database"
 
 -- UTIL =============================================================================
 -- Functions to do the "heavy lifting": Utilities
@@ -18,7 +17,7 @@ function outputTable(table)
   local count = 0
   for i in pairs(table) do
     message = "{" .. arguments[i] .. "}"
-    console(message, false)
+    print(message, false)
   end
 end
 
@@ -57,67 +56,143 @@ function lengthOfTable(table)
   return count
 end
 
-function console(msg, appendLine)
-  if appendLine == true then msg = msg .. "\n" end
-  io.write(msg)
-end
-
 function illegalCommand(commandName)
-  console("Illegal command - Use 'help' for a list of commands")
+  print("Illegal command - Use 'help' for a list of commands")
 end
 
 -- CORE =============================================================================
 -- Functions to process commands and operations
 
-function queryDatabase_getState(name)
-  file = io.open(database, "r")
+-- Table -> String (regex '|', end-line '#')
+function deserialiseEntry(string)
+  foundSeperators = 0
+  entry = {}
   
-  for line in file:lines() do
+  string:gsub(".", function(char)
+    if char == "#" then
+      return entry
+    elseif char == "|" then
+      foundSeperators = foundSeperators + 1
+      goto continue
+    else
+      entry[foundSeperators + 1] = entry[foundSeperators + 1] .. char
+    end
     
-  end
+    ::continue::
+  end)
   
+  return entry
+end
+
+-- String -> Table
+function serialiseEntry(entry)
+  return entry[1] .. "|" .. entry[2] .. "#"
 end
 
 -- COMMAND ==========================================================================
 -- Functions to recieve commands
+-- 1 is success, others failure
+
+function commandSystem()
+  if arguments[2] == "no_arg1" then
+    print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
+    return 2
+  elseif arguments[3] == "no_arg" then
+    print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
+    return 2
+  
+end
 
 -- Database command
 function commandDatabase()
+
   if arguments[2] == "no_arg1" then
-    console("The 'database' command must have at least one argument: [generate, wipe, dump, delete, get <system_name>]", true)
+    print("The 'database' command must have at least one argument: [generate, wipe, dump, delete, get <system_name>]", true)
+    return 2
+
+  elseif arguments[2] == "generate" then
+    local file = io.open(database, "w+")
+    file:write("#ssmhub database")
+    file:close(file)
     return 1
-  else
-    print("Success")
+
+  elseif arguments[2] == "dump" then
+    print("= DUMP START =")
+    for line in io.lines(database) do
+      print(line)
+    end
+    print("= DUMP  END  =")
+    return 1
+
+  elseif arguments[2] == "get" then
+    if isEmpty(arguments[3]) then
+      print("The 'database get' command must have a <name> parameter")
+      return 0
+    else
+      local file = io.open(database, "r")
+      for line in io.lines(file) do
+        local state = ""
+        local id = ""
+        local dividersFound = 0
+
+        line:gsub(".", function(c)
+          if c == "|" then
+            if dividersFound == 0 then
+              state = state .. c
+            end
+            if dividersFound == 1 then
+              id = id .. c
+            end
+            dividersFound = dividersFound + 1
+          end
+          
+        -- End lambda
+        end)
+
+        io.close(file)
+
+        -- End "for line"
+      end
+
+      -- End "elseif"
+    end
+    
+    else 
+      print("Illegal argument for command. Use 'help' for a list of commands and arguments.")
+      return 0
+    end
+
+    -- End "if"
   end
+
+  --End function
 end
 
 -- Help command
 function commandHelp()
-  console("\n == COMMANDS ==", true)
+  print("\n == COMMANDS ==", true)
 
-  console("\nsystem [add <name, state>, remove <name>, query <name>] - manages the list of available systems.", true)
-  console(" ~ 'add <name> <state>' - adds a system with the given 'name' and 'state'.", true)
-  console(" ~ 'remove <name>' - removes the system with the given 'name'.", true)
-  console(" ~ 'query <name>' - shows the state of the system with the given 'name'.", true)
+  print("\nsystem [add <name, state>, remove <name>, query <name>] - manages the list of available systems.", true)
+  print(" ~ 'add <name> <state>' - adds a system with the given 'name' and 'state'.", true)
+  print(" ~ 'remove <name>' - removes the system with the given 'name'.", true)
+  print(" ~ 'query <name>' - shows the state of the system with the given 'name'.", true)
 
-  console("\nset <name> <state> <push> - sets the 'state' of the system with the given 'name'. 'push' determines whether the change is sent to the system (see 'push' command).", true)
+  print("\nset <name> <state> <push> - sets the 'state' of the system with the given 'name'. 'push' determines whether the change is sent to the system (see 'push' command).", true)
 
-  console("\npush <name> <state> - pushes the state of the system with the given 'name' to the system.", true)
+  print("\npush <name> <state> - pushes the state of the system with the given 'name' to the system.", true)
 
-  console("\ndeploy - pushes all states (see 'push' command).", true)
+  print("\ndeploy - pushes all states (see 'push' command).", true)
 
-  console("\ndatabase [generate, wipe, dump, delete, get] <name> - works with the file system database.", true)
-  console(" ~ generate - remakes the database if it doesn't already exist", true)
-  console(" ~ wipe - wipes all data in the database files.", true)
-  console(" ~ dump - dumps the contents of the database to the computer console.", true)
-  console(" ~ delete - deletes the database, including files.", true)
-  console(" ~ get <name> - retrieves the system whose 'name' is specified's database entry.", true)
+  print("\ndatabase [generate, wipe, dump, delete, get] <name> - works with the file system database.", true)
+  print(" ~ generate - makes a new clean database", true)
+  print(" ~ dump - dumps the contents of the database to the computer print.", true)
+  print(" ~ get <name> - retrieves the system whose 'name' is specified's database entry.", true)
 
-  console("\nrefresh - reads the file system database into this program's memory", true)
+  print("\nrefresh - reads the file system database into this program's memory", true)
 
-  console("\nhelp - shows this dialogue.", true)
+  print("\nhelp - shows this dialogue.", true)
 
-  console("\n == END COMMANDS ==\n", true)
+  print("\n == END COMMANDS ==\n", true)
 
   return 1
 end
@@ -153,6 +228,367 @@ function main()
     illegalCommand(commandName)
   end
 end main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
