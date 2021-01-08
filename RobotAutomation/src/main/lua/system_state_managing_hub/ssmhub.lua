@@ -56,8 +56,16 @@ function lengthOfTable(table)
   return count
 end
 
-function illegalCommand(commandName)
-  print("Illegal command - Use 'help' for a list of commands")
+function illegalCommand()
+  return("Illegal command - Use 'help' for a list of commands")
+end
+
+function success(message) 
+  return "SUCCESS: " .. message
+end
+
+function abnormal(message)
+  return "ABNORMAL: " .. message
 end
 
 -- CORE =============================================================================
@@ -67,21 +75,21 @@ end
 function deserialiseEntry(string)
   local foundSeperators = 0
   local entry = {}
-  
+
   string:gsub(".", function(char)
-  
-    if char == "#" then
-      return entry
-    elseif char == "|" then
-      foundSeperators = foundSeperators + 1
-      goto continue
-    else
-      entry[foundSeperators + 1] = entry[foundSeperators + 1] .. char
-    end
-    
-    ::continue::
-  end)
-  
+
+      if char == "#" then
+        return entry
+      elseif char == "|" then
+        foundSeperators = foundSeperators + 1
+        goto continue
+      else
+        entry[foundSeperators + 1] = entry[foundSeperators + 1] .. char
+      end
+
+      ::continue::
+    end)
+
   return entry
 end
 
@@ -96,12 +104,10 @@ end
 
 function commandSystem()
   if arguments[2] == "no_arg1" then
-    print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
-    return 2
+    return 2,abnormal("The 'system' command must have at least two arguments: [add, remove, query] <system_name>")
   end
   if arguments[3] == "no_arg" then
-    print("The 'system' command must have at least two arguments: [add, remove, query] <system_name>", true)
-    return 2
+    return 2,abnormal("The 'system' command must have at least two arguments: [add, remove, query] <system_name>")
   end
 end
 
@@ -109,36 +115,44 @@ end
 function commandDatabase()
 
   if arguments[2] == "no_arg1" then
-    print("The 'database' command must have at least one argument: [generate, wipe, dump, delete, get <system_name>]", true)
-    return 2
-    
+    return 2,abnormal("The 'database' command must have at least one argument: [generate, wipe, dump, delete, get <system_name>]")
+
+    -- Generate
   elseif arguments[2] == "generate" then
     local file = io.open(database, "w+")
     file:write("#ssmhub database")
     file:close(file)
-    return 1
+    return 1, success("Generated database file at: " .. database)
 
+    -- Dump
   elseif arguments[2] == "dump" then
     print("= DUMP START =")
     for line in io.lines(database) do
       print(line)
     end
     print("= DUMP  END  =")
-    return 1
+    return 1, success("Dump successful")
 
-  -- 1+
+  elseif arguments[2] == "delete" then
+
+    x,message,code = os.remove(database)
+
+    if code == nil then return 1,success(database .. " deleted") end
+
+    return code,abnormal(message)
+
+    -- Get
   elseif arguments[2] == "get" then
-  
+
     -- 2+
     if isEmpty(arguments[3]) then
-      print("The 'database get' command must have a <name> parameter")
-      return 0
-    -- 2-
-    
-    -- 3+
+      return 0, abnormal("The 'database get' command must have a <name> parameter")
+      -- 2-
+
+      -- 3+
     else
       local file = io.open(database, "r")
-      
+
       -- 4+
       for line in io.lines(file) do
         local state = ""
@@ -147,29 +161,29 @@ function commandDatabase()
 
         -- 5+
         line:gsub(".", function(char)
-        
-          -- 6+
-          if char == "|" then
-          
-            -- 7+
-            if dividersFound == 0 then
-              state = state .. char
-            -- 7-
+
+            -- 6+
+            if char == "|" then
+
+              -- 7+
+              if dividersFound == 0 then
+                state = state .. char
+                -- 7-
+              end
+
+              -- 8+
+              if dividersFound == 1 then
+                id = id .. char
+              end
+
+              -- 8-
+              dividersFound = dividersFound + 1
+
+              -- 6-
             end
-            
-            -- 8+
-            if dividersFound == 1 then
-              id = id .. char
-            end
-            
-            -- 8-
-            dividersFound = dividersFound + 1
-            
-          -- 6-
-          end
-          
-        -- 5-
-        end)
+
+            -- 5-
+          end)
 
         io.close(file)
 
@@ -178,50 +192,49 @@ function commandDatabase()
 
       -- 3-
     end
-    
-    -- 9+
-    else 
-      print("Illegal argument for command. Use 'help' for a list of commands and arguments.")
-      return 0
-    -- 9-
-    end
 
-    -- 2-
+    -- 9+
+  else 
+    return 0, illegalCommand()
+    -- 9-
   end
+
+  -- 2-
+end
 
 -- Help command
 function commandHelp()
-  print("\n == COMMANDS ==", true)
+  print("\n == COMMANDS ==")
 
-  print("\nsystem [add <name, state>, remove <name>, query <name>] - manages the list of available systems.", true)
-  print(" ~ 'add <name> <state>' - adds a system with the given 'name' and 'state'.", true)
-  print(" ~ 'remove <name>' - removes the system with the given 'name'.", true)
-  print(" ~ 'query <name>' - shows the state of the system with the given 'name'.", true)
+  print("\nsystem [add <name, state>, remove <name>, query <name>] - manages the list of available systems.")
+  print(" ~ 'add <name> <state>' - adds a system with the given 'name' and 'state'.")
+  print(" ~ 'remove <name>' - removes the system with the given 'name'.")
+  print(" ~ 'query <name>' - shows the state of the system with the given 'name'.")
 
-  print("\nset <name> <state> <push> - sets the 'state' of the system with the given 'name'. 'push' determines whether the change is sent to the system (see 'push' command).", true)
+  print("\nset <name> <state> <push> - sets the 'state' of the system with the given 'name'. 'push' determines whether the change is sent to the system (see 'push' command).")
 
-  print("\npush <name> <state> - pushes the state of the system with the given 'name' to the system.", true)
+  print("\npush <name> <state> - pushes the state of the system with the given 'name' to the system.")
 
-  print("\ndeploy - pushes all states (see 'push' command).", true)
+  print("\ndeploy - pushes all states (see 'push' command).")
 
-  print("\ndatabase [generate, wipe, dump, delete, get] <name> - works with the file system database.", true)
-  print(" ~ generate - makes a new clean database", true)
-  print(" ~ dump - dumps the contents of the database to the computer print.", true)
-  print(" ~ get <name> - retrieves the system whose 'name' is specified's database entry.", true)
+  print("\ndatabase [generate, dump, delete, get] <name> - works with the file system database.")
+  print(" ~ generate - makes a new clean database. Wipes the current one if it exists.")
+  print(" ~ dump - dumps the contents of the database to the computer print.")
+  print(" ~ get <name> - retrieves the system whose 'name' is specified's database entry.")
 
-  print("\nrefresh - reads the file system database into this program's memory", true)
+  print("\nrefresh - reads the file system database into this program's memory")
 
-  print("\nhelp - shows this dialogue.", true)
+  print("\nhelp - shows this dialogue.")
 
-  print("\n == END COMMANDS ==\n", true)
+  print("\n == END COMMANDS ==\n")
 
-  return 1
+  return 1, success("Lent a helping hand")
 end
 
 -- System command
 function commandSystem()
 
-  return 1
+  return 1,success("COMMAND SYSTEM DONE")
 end
 
 -- Main
@@ -230,25 +243,27 @@ function main()
 
   commandArgument = arguments[1]
 
-  commandCompleteCode = 0
+  exitCode = 0
+  message = "No message recieved from command"
 
   -- Check commands
   if commandArgument == "no_command" or isEmpty(arguments[1]) then
     illegalCommand(commandArgument)
 
   elseif commandArgument == "system" then
-    commandCompleteCode = commandSystem()
+    exitCode,message = commandSystem()
 
   elseif commandArgument == "database" then
-    commandCompleteCode = commandDatabase()
+    exitCode,message = commandDatabase()
 
   elseif commandArgument == "help" then
-    commandCompleteCode = commandHelp()
+    exitCode,message = commandHelp()
 
   else
-    illegalCommand(commandArgument)
+    message = illegalCommand(commandArgument)
   end
-end main()
 
+  print("Exit Code " .. exitCode .. " - " .. message)
+end main()
 
 
